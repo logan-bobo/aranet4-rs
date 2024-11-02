@@ -1,8 +1,12 @@
 use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
 use btleplug::platform::{Adapter, Manager, Peripheral};
 use std::error::Error;
+use std::str::FromStr;
 use std::time::Duration;
 use tokio::time;
+use uuid::Uuid;
+
+const BATTERY_UUID: &str = "00002a19-0000-1000-8000-00805f9b34fb";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -23,6 +27,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let chars = device.characteristics();
 
     println!("{chars:#?}");
+
+    let uuid_to_test: Uuid = Uuid::from_str(BATTERY_UUID).expect("To handle");
+
+    let cmd_char = chars.iter().find(|c| c.uuid == uuid_to_test).unwrap();
+
+    let battery_level = device.read(&cmd_char).await?;
+
+    let battery_level = battery_level[0];
+
+    println!("Device Battery Level: {battery_level:#?}%");
 
     Ok(())
 }
